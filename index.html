@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security Alert Analyzer</title>
+  <style>
+    body {
+  font-family: 'Times New Roman', Times, serif;
+  font-style: italic;
+  background: linear-gradient(135deg, #f0a5fc 0%, #360fe0 100%);
+  padding: 20px;
+  margin: 0;
+  min-height: 100vh;
+
+
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: rgb(23, 10, 12);
+      margin-bottom: 30px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      font-size: 48px;
+    }
+
+    .card {
+      background: rgb(208, 230, 246);
+      padding: 25px;
+      border-radius: 15px;
+      margin-bottom: 25px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      backdrop-filter: blur(10px);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .stat-box {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 10px;
+      border-left: 4px solid #2e8b57;
+    }
+
+    .stat-box h3 {
+      margin: 0 0 10px 0;
+      color: #333;
+      font-size: 16px;
+    }
+
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      margin: 8px 0;
+      padding: 5px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .stat-item:last-child {
+      border-bottom: none;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+
+    th {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-weight: 600;
+    }
+
+    tr:hover {
+      background-color: #f8f9fa;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #2e8b57 0%, #3cb371 100%);
+      color: white;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      margin: 10px 5px;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(46, 139, 87, 0.3);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .btn-secondary:hover {
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+      color: #666;
+    }
+
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #2e8b57;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .error {
+      background-color: #ffe6e6;
+      color: #d63031;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+      border-left: 4px solid #d63031;
+    }
+
+    .success {
+      background-color: #e6ffe6;
+      color: #00b894;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+      border-left: 4px solid #00b894;
+    }
+
+    .prediction-badge {
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .true-positive {
+      background-color: #e6ffe6;
+      color: #00b894;
+    }
+
+    .false-positive {
+      background-color: #ffe6e6;
+      color: #d63031;
+    }
+
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .container {
+        padding: 10px;
+      }
+      
+      table {
+        font-size: 12px;
+      }
+      
+      th, td {
+        padding: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Intelligent IT Operations</h1>
+
+    <div class="card">
+      <h2>Model Training</h2>
+      <button class="btn" onclick="trainModel()">Train New Model</button>
+      <div id="trainLoading" class="loading">
+        <div class="spinner"></div>
+        <p>Training model... This may take a few minutes.</p>
+      </div>
+      <div id="trainResult"></div>
+    </div>
+
+    <div class="card">
+      <h2>Model Performance</h2>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <h3>Before Training</h3>
+          <div class="stat-item">
+            <span>False Positives:</span>
+            <span id="fpBefore">-</span>
+          </div>
+          <div class="stat-item">
+            <span>Accuracy:</span>
+            <span id="accBefore">-</span>
+          </div>
+        </div>
+        
+        <div class="stat-box">
+          <h3>After Training</h3>
+          <div class="stat-item">
+            <span>False Positives:</span>
+            <span id="fpAfter">-</span>
+          </div>
+          <div class="stat-item">
+            <span>Accuracy:</span>
+            <span id="accAfter">-</span>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-secondary" onclick="getStats()"> Refresh Stats</button>
+    </div>
+
+    <div class="card">
+      <h2>Filtered Security Alerts</h2>
+      <button class="btn" onclick="getFilteredAlerts()">Load Recent Alerts</button>
+      <div id="alertLoading" class="loading">
+        <div class="spinner"></div>
+        <p>Loading alerts...</p>
+      </div>
+      <table id="alertTable" style="display: none;">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Source IP</th>
+            <th>Destination IP</th>
+            <th>Alert Type</th>
+            <th>Prediction</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://127.0.0.1:5000';
+
+    function showError(elementId, message) {
+      const element = document.getElementById(elementId);
+      element.innerHTML = `<div class="error">${message}</div>`;
+    }
+
+    function showSuccess(elementId, message) {
+      const element = document.getElementById(elementId);
+      element.innerHTML = `<div class="success"> ${message}</div>`;
+    }
+
+    async function trainModel() {
+      const loadingEl = document.getElementById('trainLoading');
+      const resultEl = document.getElementById('trainResult');
+      
+      loadingEl.style.display = 'block';
+      resultEl.innerHTML = '';
+
+      try {
+        const response = await fetch(`${API_BASE}/train_model`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+          showSuccess('trainResult', 
+            `Model trained successfully! Accuracy: ${(data.accuracy * 100).toFixed(2)}%, ROC-AUC: ${(data.roc_auc * 100).toFixed(2)}%`
+          );
+          // Refresh stats after training
+          setTimeout(getStats, 1000);
+        } else {
+          showError('trainResult', data.error || 'Training failed');
+        }
+      } catch (error) {
+        showError('trainResult', `Network error: ${error.message}`);
+      } finally {
+        loadingEl.style.display = 'none';
+      }
+    }
+
+    async function getStats() {
+      try {
+        const response = await fetch(`${API_BASE}/performance`);
+        const data = await response.json();
+        
+        if (response.ok) {
+          document.getElementById('fpBefore').textContent = data.before.false_positives;
+          document.getElementById('accBefore').textContent = data.before.accuracy + '%';
+          document.getElementById('fpAfter').textContent = data.after.false_positives;
+          document.getElementById('accAfter').textContent = data.after.accuracy + '%';
+        } else {
+          console.error('Failed to fetch stats:', data.error);
+        }
+      } catch (error) {
+        console.error('Network error:', error);
+      }
+    }
+
+    async function getFilteredAlerts() {
+      const loadingEl = document.getElementById('alertLoading');
+      const tableEl = document.getElementById('alertTable');
+      
+      loadingEl.style.display = 'block';
+      tableEl.style.display = 'none';
+
+      try {
+        const response = await fetch(`${API_BASE}/alerts`);
+        const data = await response.json();
+        
+        if (response.ok) {
+          const tbody = tableEl.querySelector('tbody');
+          tbody.innerHTML = '';
+          
+          data.alerts.forEach(alert => {
+            const row = document.createElement('tr');
+            const predictionClass = alert.prediction === 'True Positive' ? 'true-positive' : 'false-positive';
+            
+            row.innerHTML = `
+              <td>${alert.timestamp}</td>
+              <td>${alert.src_ip}</td>
+              <td>${alert.dst_ip}</td>
+              <td>${alert.alert}</td>
+              <td><span class="prediction-badge ${predictionClass}">${alert.prediction}</span></td>
+            `;
+            tbody.appendChild(row);
+          });
+          
+          tableEl.style.display = 'table';
+        } else {
+          showError('alertLoading', data.error || 'Failed to load alerts');
+        }
+      } catch (error) {
+        showError('alertLoading', `Network error: ${error.message}`);
+      } finally {
+        loadingEl.style.display = 'none';
+      }
+    }
+
+    // Check server health on page load
+    async function checkHealth() {
+      try {
+        const response = await fetch(`${API_BASE}/health`);
+        const data = await response.json();
+        
+        if (response.ok) {
+          console.log('Server is healthy:', data);
+          getStats(); // Load initial stats
+        } else {
+          console.warn('Server health check failed');
+        }
+      } catch (error) {
+        console.error('Cannot connect to server:', error);
+        showError('trainResult', 'Cannot connect to backend server. Make sure the Flask app is running.');
+      }
+    }
+
+    // Initialize page
+    window.addEventListener('load', checkHealth);
+  </script>
+</body>
+</html>
